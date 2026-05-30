@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    // Node 24 runs .ts by stripping types only — no transform. These two flags
+    // make tsc reject anything Node's loader cannot strip (enums, namespaces
+    // with runtime code, parameter properties, etc.), so typecheck == runnable.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+
+    // Node 24 runs .ts directly, so imports use real ".ts" specifiers.
+    "allowImportingTsExtensions": true,
+
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["statusline.ts", "src/**/*.ts"]
+}

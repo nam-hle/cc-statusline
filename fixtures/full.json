@@ -1,0 +1,20 @@
+{
+  "cwd": "/home/you/projects/myrepo",
+  "session_name": "some long name with spaces",
+  "model": { "id": "claude-opus-4-8" },
+  "workspace": { "current_dir": "/home/you/projects/myrepo", "project_dir": "/home/you/projects" },
+  "output_style": { "name": "default" },
+  "cost": { "total_lines_added": 161, "total_lines_removed": 93 },
+  "context_window": {
+    "context_window_size": 1000000,
+    "remaining_percentage": 72,
+    "current_usage": { "input_tokens": 131, "cache_creation_input_tokens": 301, "cache_read_input_tokens": 152710 }
+  },
+  "exceeds_200k_tokens": true,
+  "effort": { "level": "xhigh" },
+  "thinking": { "enabled": true },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 7, "resets_at": 9999999999 },
+    "seven_day": { "used_percentage": 19 }
+  }
+}
