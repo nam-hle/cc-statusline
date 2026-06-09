@@ -9,6 +9,12 @@ export interface Config {
   repoBase: string;
   /** Command template (with {pr}/{repo}) printing PR build JSON. */
   prBuildCmd: string;
+  /**
+   * Command template (with {branch}/{repo}) printing PR list JSON for the
+   * current branch — used to discover the PR number, review state, and build
+   * status when the Claude Code JSON has none (e.g. Bitbucket via a CLI).
+   */
+  prFetchCmd: string;
   /** Helper script printing rate-limit / credits JSON. */
   usageHelper: string;
 }
@@ -19,6 +25,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     showElapsed: env["CC_SHOW_ELAPSED"] !== "false",
     repoBase: env["CC_REPO_BASE"] ?? "",
     prBuildCmd: env["CC_PR_BUILD_CMD"] ?? "",
+    prFetchCmd: env["CC_PR_FETCH_CMD"] ?? "",
     usageHelper: env["CC_USAGE_HELPER"] ?? "",
   };
 }

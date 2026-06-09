@@ -11,6 +11,7 @@ export function buildGitDisplay(
   prNumber: string,
   prReviewState: string,
   prBuildCmd: string,
+  prFetchCmd: string,
 ): string {
   if (!gitIn(cwd, "rev-parse --git-dir")) return "";
 
@@ -49,11 +50,11 @@ export function buildGitDisplay(
     if (behind > 0) tracking += `↓${behind}`;
   }
 
-  const prIndicator = buildPrIndicator(cwd, prNumber, prReviewState, prBuildCmd);
+  const prIndicator = buildPrIndicator(cwd, prNumber, prReviewState, prBuildCmd, prFetchCmd);
 
-  // Branch: drop prefix before first slash, cap at 20 chars.
+  // Branch: drop prefix before first slash, cap at 60 chars.
   if (branch.includes("/")) branch = branch.slice(branch.indexOf("/") + 1);
-  if (branch.length > 20) branch = `${branch.slice(0, 20)}…`;
+  if (branch.length > 60) branch = `${branch.slice(0, 60)}…`;
 
   let display = branch;
   if (prIndicator) display += ` ${prIndicator}`;

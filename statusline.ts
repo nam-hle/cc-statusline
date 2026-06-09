@@ -15,7 +15,7 @@
  */
 
 import { loadConfig } from "./src/config.ts";
-import { C, RESET, paint } from "./src/ansi.ts";
+import { C, paint } from "./src/ansi.ts";
 import { readStdin, deriveFields } from "./src/input.ts";
 import { formatDir } from "./src/dir.ts";
 import { formatModel } from "./src/model.ts";
@@ -28,7 +28,7 @@ const f = deriveFields(readStdin());
 // ─── LEFT: dir  git  agent  vim ──────────────────────────────────────────────
 let left = paint(C.cyan, formatDir(f.cwd, cfg.repoBase));
 
-const gitDisplay = buildGitDisplay(f.cwd, f.prNumber, f.prReviewState, cfg.prBuildCmd);
+const gitDisplay = buildGitDisplay(f.cwd, f.prNumber, f.prReviewState, cfg.prBuildCmd, cfg.prFetchCmd);
 if (gitDisplay) left += ` ${paint(C.magenta, gitDisplay)}`;
 if (f.agentName) left += ` ${paint(C.yellow, `⚡${f.agentName}`)}`;
 if (f.vimMode) left += ` ${f.vimMode === "NORMAL" ? paint(C.green, "N") : paint(C.blue, "I")}`;
@@ -58,15 +58,8 @@ if (f.contextRemaining != null) {
   right = right ? `${right} ${ctxStr}` : ctxStr;
 }
 
-if (f.cacheRead > 0) {
-  const denom = f.cacheRead + f.cacheCreation + f.inputTokens;
-  if (denom > 0) {
-    const hitPct = Math.floor((f.cacheRead * 100) / denom);
-    const hitColor = hitPct >= 80 ? C.green : hitPct >= 50 ? C.yellow : C.grey;
-    right += ` ${C.grey}⚡${hitColor}${hitPct}%${RESET}`;
-  }
-}
-
 // ─── Emit ────────────────────────────────────────────────────────────────────
+// Two lines: context (dir/git/agent/vim) on top, session (model/ctx/usage) below.
 const usageSuffix = buildUsageSuffix(f, cfg);
-process.stdout.write(`${left} │ ${right}${usageSuffix}\n`);
+const line2 = `${right}${usageSuffix}`.trim();
+process.stdout.write(`${left}\n${line2}\n`);
