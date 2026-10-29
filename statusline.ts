@@ -53,8 +53,9 @@ if (modelShort) {
 
 if (f.contextRemaining != null) {
   const used = Math.round(100 - Number(f.contextRemaining));
-  const ctxColor = used > 80 ? C.red : used > 50 ? C.yellow : C.green;
   const ctxTokens = f.cacheRead + f.cacheCreation + f.inputTokens;
+  const ctxColor =
+    used > 80 || ctxTokens >= 300_000 ? C.red : used > 50 || ctxTokens >= 200_000 ? C.yellow : C.green;
   const tokensLabel = ctxTokens >= 1000 ? `${Math.round(ctxTokens / 1000)}k ` : "";
   const ctxStr = paint(ctxColor, `${tokensLabel}${used}%`);
   right = right ? `${right} ${ctxStr}` : ctxStr;
