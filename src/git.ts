@@ -52,9 +52,18 @@ export function buildGitDisplay(
 
   const prIndicator = buildPrIndicator(cwd, prNumber, prReviewState, prBuildCmd, prFetchCmd);
 
-  // Branch: drop prefix before first slash, cap at 60 chars.
+  // Branch: drop prefix before first slash, then keep whole words up to 30 chars.
   if (branch.includes("/")) branch = branch.slice(branch.indexOf("/") + 1);
-  if (branch.length > 60) branch = `${branch.slice(0, 60)}…`;
+  if (branch.length > 30) {
+    const words = branch.split(/[-_]/);
+    let kept = (words[0] ?? branch).slice(0, 30);
+    for (let i = 1; i < words.length; i++) {
+      const next = `${kept}-${words[i]}`;
+      if (next.length > 30) break;
+      kept = next;
+    }
+    branch = `${kept}…`;
+  }
 
   let display = branch;
   if (prIndicator) display += ` ${prIndicator}`;
