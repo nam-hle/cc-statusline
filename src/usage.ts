@@ -32,7 +32,7 @@ function buildWeeklySuffix(fields: Fields, cfg: Config): string {
     fivePct = fields.rlFivePct;
     sevenPct = fields.rlSevenPct;
     resetsAt = fields.rlFiveReset; // already epoch seconds
-    sevenResetsAt = fields.rlSevenReset;
+    sevenResetsAt = fields.rlSevenReset ?? helperSevenReset(cfg);
   } else if (cfg.usageHelper) {
     const raw = sh(`USAGE_MODE=weekly ${cfg.usageHelper} --raw`);
     if (raw) {
@@ -77,6 +77,18 @@ function buildWeeklySuffix(fields: Fields, cfg: Config): string {
 
 const WEEK_SECONDS = 7 * 24 * 3600;
 
+function helperSevenReset(cfg: Config): number | undefined {
+  if (!cfg.usageHelper) return undefined;
+  const raw = sh(`USAGE_MODE=weekly ${cfg.usageHelper} --raw`);
+  if (!raw) return undefined;
+  try {
+    const j = JSON.parse(raw) as { seven_day?: { resets_at?: string } };
+    return parseIsoEpoch(j.seven_day?.resets_at);
+  } catch {
+    return undefined;
+  }
+}
+
 function parseIsoEpoch(iso: string | undefined): number | undefined {
   if (!iso) return undefined;
   const parsed = Math.floor(new Date(iso).getTime() / 1000);
@@ -98,7 +110,7 @@ function buildWeeklyEta(sevenPct: number, resetsAt: number | undefined): string 
   const elapsed = WEEK_SECONDS - untilReset;
   if (untilReset <= 0 || elapsed <= 0) return "";
   const untilEmpty = sevenPct >= 100 ? 0 : ((100 - sevenPct) * elapsed) / sevenPct;
-  if (untilEmpty >= untilReset) return "";
+  if (untilEmpty >= untilReset) return ` ${paint(C.green, "ok")}`;
   const color = untilEmpty < 86400 ? C.red : C.yellow;
   return ` ${paint(color, `out ${formatWeekdayTime(now + untilEmpty)}`)}`;
 }
