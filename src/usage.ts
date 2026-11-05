@@ -26,26 +26,25 @@ function buildWeeklySuffix(fields: Fields, cfg: Config): string {
   let fivePct: number | undefined;
   let sevenPct: number | undefined;
   let resetsAt: number | undefined;
+  let sevenResetsAt: number | undefined;
 
   if (fields.rlFivePct != null && fields.rlSevenPct != null) {
     fivePct = fields.rlFivePct;
     sevenPct = fields.rlSevenPct;
     resetsAt = fields.rlFiveReset; // already epoch seconds
+    sevenResetsAt = fields.rlSevenReset;
   } else if (cfg.usageHelper) {
     const raw = sh(`USAGE_MODE=weekly ${cfg.usageHelper} --raw`);
     if (raw) {
       try {
         const j = JSON.parse(raw) as {
           five_hour?: { utilization?: number; resets_at?: string };
-          seven_day?: { utilization?: number };
+          seven_day?: { utilization?: number; resets_at?: string };
         };
         fivePct = j.five_hour?.utilization;
         sevenPct = j.seven_day?.utilization;
-        const ra = j.five_hour?.resets_at;
-        if (ra) {
-          const parsed = Math.floor(new Date(ra).getTime() / 1000);
-          if (!Number.isNaN(parsed)) resetsAt = parsed;
-        }
+        resetsAt = parseIsoEpoch(j.five_hour?.resets_at);
+        sevenResetsAt = parseIsoEpoch(j.seven_day?.resets_at);
       } catch {
         /* ignore */
       }
@@ -68,10 +67,40 @@ function buildWeeklySuffix(fields: Fields, cfg: Config): string {
   const sep = paint(C.grey, "·");
   const ratio = `${paint(colorForPct(fiveInt), `${fiveInt}%`)}${paint(C.grey, "/")}${paint(colorForPct(sevenInt), `${sevenInt}%`)}`;
 
+  const eta = buildWeeklyEta(sevenPct, sevenResetsAt);
+
   if (cfg.showElapsed && elapsedLabel) {
-    return ` ${sep} ${paint(colorForPct(fiveInt), elapsedLabel)} ${ratio}`;
+    return ` ${sep} ${paint(colorForPct(fiveInt), elapsedLabel)} ${ratio}${eta}`;
   }
-  return ` ${sep} ${ratio}`;
+  return ` ${sep} ${ratio}${eta}`;
+}
+
+const WEEK_SECONDS = 7 * 24 * 3600;
+
+function parseIsoEpoch(iso: string | undefined): number | undefined {
+  if (!iso) return undefined;
+  const parsed = Math.floor(new Date(iso).getTime() / 1000);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+function formatWeekdayTime(epochSeconds: number): string {
+  const d = new Date(epochSeconds * 1000);
+  const day = d.toLocaleDateString("en-US", { weekday: "short" });
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return `${day} ${time}`;
+}
+
+/** " out Fri 14:30" when the weekly quota runs out before reset at the current average rate. */
+function buildWeeklyEta(sevenPct: number, resetsAt: number | undefined): string {
+  if (resetsAt == null || sevenPct <= 0) return "";
+  const now = Math.floor(Date.now() / 1000);
+  const untilReset = resetsAt - now;
+  const elapsed = WEEK_SECONDS - untilReset;
+  if (untilReset <= 0 || elapsed <= 0) return "";
+  const untilEmpty = sevenPct >= 100 ? 0 : ((100 - sevenPct) * elapsed) / sevenPct;
+  if (untilEmpty >= untilReset) return "";
+  const color = untilEmpty < 86400 ? C.red : C.yellow;
+  return ` ${paint(color, `out ${formatWeekdayTime(now + untilEmpty)}`)}`;
 }
 
 function buildCreditsSuffix(cfg: Config): string {

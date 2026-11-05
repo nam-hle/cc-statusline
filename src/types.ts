@@ -30,7 +30,7 @@ export interface StatusInput {
   pr?: { number?: number | string; review_state?: string };
   rate_limits?: {
     five_hour?: { used_percentage?: number; resets_at?: number };
-    seven_day?: { used_percentage?: number };
+    seven_day?: { used_percentage?: number; resets_at?: number };
   };
 }
 
@@ -53,4 +53,5 @@ export interface Fields {
   rlFivePct: number | undefined;
   rlFiveReset: number | undefined;
   rlSevenPct: number | undefined;
+  rlSevenReset: number | undefined;
 }

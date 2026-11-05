@@ -58,5 +58,6 @@ export function deriveFields(data: StatusInput): Fields {
     rlFivePct: data.rate_limits?.five_hour?.used_percentage,
     rlFiveReset: data.rate_limits?.five_hour?.resets_at,
     rlSevenPct: data.rate_limits?.seven_day?.used_percentage,
+    rlSevenReset: data.rate_limits?.seven_day?.resets_at,
   };
 }
