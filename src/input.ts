@@ -1,7 +1,33 @@
 /** Read stdin JSON and flatten it into defaulted {@link Fields}. */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { StatusInput, Fields } from "./types.ts";
+
+const MAX_SESSION_FILE_BYTES = 8192;
+
+/** Undocumented: ~/.claude/sessions/<pid>.json holds {sessionId, name}. */
+function lookupDerivedSessionName(sessionId: string | undefined): string {
+  if (!sessionId) return "";
+  try {
+    const dir = join(homedir(), ".claude", "sessions");
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const raw = readFileSync(join(dir, file), "utf8");
+        if (raw.length > MAX_SESSION_FILE_BYTES) continue;
+        const entry = JSON.parse(raw) as { sessionId?: string; name?: string };
+        if (entry.sessionId === sessionId) return entry.name ?? "";
+      } catch {
+        continue;
+      }
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
 
 export function readStdin(): StatusInput {
   try {
@@ -26,6 +52,7 @@ export function deriveFields(data: StatusInput): Fields {
     inputTokens: usage?.input_tokens ?? 0,
     vimMode: data.vim?.mode ?? "",
     agentName: data.agent?.name ?? "",
+    sessionName: lookupDerivedSessionName(data.session_id) || data.session_name || "",
     prNumber: data.pr?.number != null ? String(data.pr.number) : "",
     prReviewState: data.pr?.review_state ?? "",
     rlFivePct: data.rate_limits?.five_hour?.used_percentage,

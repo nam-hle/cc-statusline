@@ -1,6 +1,7 @@
 /** The subset of Claude Code's status-line stdin JSON that we read. */
 export interface StatusInput {
   cwd?: string;
+  session_id?: string;
   session_name?: string;
   model?: { id?: string; display_name?: string };
   workspace?: { current_dir?: string; project_dir?: string };
@@ -46,6 +47,7 @@ export interface Fields {
   inputTokens: number;
   vimMode: string;
   agentName: string;
+  sessionName: string;
   prNumber: string;
   prReviewState: string;
   rlFivePct: number | undefined;

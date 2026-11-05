@@ -31,6 +31,7 @@ let left = paint(C.cyan, formatDir(f.cwd, cfg.repoBase));
 const gitDisplay = buildGitDisplay(f.cwd, f.prNumber, f.prReviewState, cfg.prBuildCmd, cfg.prFetchCmd);
 if (gitDisplay) left += ` ${paint(C.magenta, gitDisplay)}`;
 if (f.agentName) left += ` ${paint(C.yellow, `⚡${f.agentName}`)}`;
+if (f.sessionName) left += ` ${paint(C.blue, `[${f.sessionName}]`)}`;
 if (f.vimMode) left += ` ${f.vimMode === "NORMAL" ? paint(C.green, "N") : paint(C.blue, "I")}`;
 
 // ─── RIGHT: model  effort  thinking  ctx%  cache-hit ─────────────────────────
