@@ -102,17 +102,64 @@ function formatWeekdayTime(epochSeconds: number): string {
   return `${day} ${time}`;
 }
 
-/** " out Fri 14:30" when the weekly quota runs out before reset at the current average rate. */
+// Local hours that count as working time; usage outside them is assumed to be zero.
+const WORK_START_HOUR = 8;
+const WORK_END_HOUR = 20;
+
+/** Start and end (epoch seconds) of the working window on the local day containing `t`. */
+function workWindow(t: number): [number, number] {
+  const d = new Date(t * 1000);
+  d.setHours(WORK_START_HOUR, 0, 0, 0);
+  const start = d.getTime() / 1000;
+  d.setHours(WORK_END_HOUR);
+  return [start, d.getTime() / 1000];
+}
+
+function nextMidnight(t: number): number {
+  const d = new Date(t * 1000);
+  d.setHours(24, 0, 0, 0);
+  return d.getTime() / 1000;
+}
+
+/** Working seconds between `from` and `to`. */
+function activeSeconds(from: number, to: number): number {
+  let total = 0;
+  for (let day = from; day < to; day = nextMidnight(day)) {
+    const [start, end] = workWindow(day);
+    total += Math.max(0, Math.min(end, to) - Math.max(start, day));
+  }
+  return total;
+}
+
+/** Wall-clock time after spending `amount` working seconds from `from`. */
+function addActiveSeconds(from: number, amount: number): number {
+  let remaining = amount;
+  for (let day = from; ; day = nextMidnight(day)) {
+    const [start, end] = workWindow(day);
+    const begin = Math.max(start, day);
+    const available = Math.max(0, end - begin);
+    if (remaining <= available) return begin + remaining;
+    remaining -= available;
+  }
+}
+
+/**
+ * " out Fri 14:30" when the weekly quota runs out before reset, at the average rate per
+ * working hour (WORK_START_HOUR-WORK_END_HOUR local) so far.
+ */
 function buildWeeklyEta(sevenPct: number, resetsAt: number | undefined): string {
   if (resetsAt == null || sevenPct <= 0) return "";
   const now = Math.floor(Date.now() / 1000);
   const untilReset = resetsAt - now;
   const elapsed = WEEK_SECONDS - untilReset;
   if (untilReset <= 0 || elapsed <= 0) return "";
-  const untilEmpty = sevenPct >= 100 ? 0 : ((100 - sevenPct) * elapsed) / sevenPct;
-  if (untilEmpty >= untilReset) return ` ${paint(C.green, "ok")}`;
-  const color = untilEmpty < 86400 ? C.red : C.yellow;
-  return ` ${paint(color, `out ${formatWeekdayTime(now + untilEmpty)}`)}`;
+  const activeElapsed = activeSeconds(resetsAt - WEEK_SECONDS, now);
+  if (activeElapsed <= 0) return "";
+  const activeNeeded = sevenPct >= 100 ? 0 : ((100 - sevenPct) * activeElapsed) / sevenPct;
+  if (activeNeeded >= activeSeconds(now, resetsAt)) return ` ${paint(C.green, "ok")}`;
+  const outAt = addActiveSeconds(now, activeNeeded);
+  const color = outAt - now < 86400 ? C.red : C.yellow;
+  return ` ${paint(color, `out ${formatWeekdayTime(outAt)}`)}`;
 }
 
 function buildCreditsSuffix(cfg: Config): string {

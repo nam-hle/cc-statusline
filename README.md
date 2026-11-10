@@ -23,7 +23,7 @@ repo master ↑1 │ Opus 4.8 (1M) xHi ✻ 28% ⚡99%  · 0m 7%/19%
 | `28%` | `context_window.remaining_percentage` |
 | `⚡99%` | `context_window.current_usage.*` (cache-hit ratio) |
 | `0m 7%/19%` | `rate_limits.*` (5h elapsed + 5h / 7d utilization) |
-| `out Fri 14:30` | `rate_limits.seven_day` (local weekday and time the 7d quota runs out at the week's average rate; `ok` if not before reset) |
+| `out Fri 14:30` | `rate_limits.seven_day` (local weekday and time the 7d quota runs out at the week's average rate per working hour, 08:00-20:00 local, nights not counted; `ok` if not before reset) |
 
 ## Run
 
